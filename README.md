@@ -100,7 +100,3 @@ If you encounter crash or error, try to upgrade your GPU driver
         booktitle = {International Conference on Computer Vision Workshops (ICCVW)},
         date      = {2021}
     }
-
-## :e-mail: Contact
-
-If you have any question, please email `xintao.wang@outlook.com` or `xintaowang@tencent.com`.
