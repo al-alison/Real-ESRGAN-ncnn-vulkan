@@ -8,7 +8,6 @@ on:
 
 env:
   VULKANSDK_VERSION: 1.4.309.0
-  # Xcode 15.2 is supported on macos-14
   DEVELOPER_DIR: /Applications/Xcode_15.2.app/Contents/Developer
   UseMultiToolTask: true
 
@@ -32,9 +31,7 @@ jobs:
       run: |
         curl -LO https://github.com/Kitware/CMake/releases/download/v3.16.9/cmake-3.16.9-Darwin-x86_64.tar.gz
         tar -xzf cmake-3.16.9-Darwin-x86_64.tar.gz
-        # Strip the macOS 'quarantine' attribute to allow the old binary to run
         sudo xattr -rd com.apple.quarantine $PWD/cmake-3.16.9-Darwin-x86_64/
-        # Export the path for subsequent steps
         echo "$PWD/cmake-3.16.9-Darwin-x86_64/CMake.app/Contents/bin" >> $GITHUB_PATH
 
     - name: Install Vulkan SDK
@@ -47,28 +44,30 @@ jobs:
 
     - name: build-x86_64
       run: |
-        # Use the Vulkan SDK path we installed to
         export VULKAN_SDK=$GITHUB_WORKSPACE/vulkan_sdk/macOS
         mkdir build-x86_64 && cd build-x86_64
-        
-        # We call 'cmake' which will now point to 3.16 because of the GITHUB_PATH update
         cmake -DUSE_STATIC_MOLTENVK=ON \
               -DCMAKE_OSX_ARCHITECTURES="x86_64" \
               -DVulkan_INCLUDE_DIR="$VULKAN_SDK/include" \
               -DVulkan_LIBRARY="$VULKAN_SDK/lib/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a" \
               ../src
-              
         cmake --build . -j $(sysctl -n hw.ncpu)
 
     - name: build-arm64
       run: |
         export VULKAN_SDK=$GITHUB_WORKSPACE/vulkan_sdk/macOS
         mkdir build-arm64 && cd build-arm64
-        
         cmake -DUSE_STATIC_MOLTENVK=ON \
               -DCMAKE_OSX_ARCHITECTURES="arm64" \
               -DVulkan_INCLUDE_DIR="$VULKAN_SDK/include" \
               -DVulkan_LIBRARY="$VULKAN_SDK/lib/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a" \
               ../src
-              
         cmake --build . -j $(sysctl -n hw.ncpu)
+
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: realesrgan-macos
+        path: |
+          build-x86_64/realesrgan-ncnn-vulkan
+          build-arm64/realesrgan-ncnn-vulkan
